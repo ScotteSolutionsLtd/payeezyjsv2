@@ -1,37 +1,22 @@
-# Payeezy JS (Payments.js Version 2) Payment Module For Zen Cart
+# Payeezy JS (Version 2) Payment Module For Zen Cart
 
 ## About
 
-The Payeezy JS payment service is a PCI Compliant payment solution which provides credit card fields on your store to accept credit card payments. All processing happens using background javascript and ajax processing, so that no card data can be saved on your server.
+The Payeezy JS payment service is a PCI Compliant payment solution which provides credit card fields on your store to accept credit card payments. All processing happens using background javascript and ajax processing so that no card data can be saved on your server.
 
 The payment gateway is powered by First Data, and is available to all First Data and Global Gateway E-Commerce merchants.
 
 ## Compatibility
 
-This module was written for Zen Cart v1.5.7; however should be easily adapted to other version. No Zen Cart core files need to be edited, only adjustments to your template.
+This module was written for Zen Cart v1.5.7; however should be easily adapted to other versions. No Zen Cart core files need to be edited, only adjustments to your template.
 
-This module requires PHP > 7 and is not tested on older versions.
-
-## Installation
-
-
-### PHP Files
-Upload the packaged folder and files into the corresponding locations in your own store's filesystem:
-
-`/includes/modules/payment/payeezyjsv2/`
-
-`/includes/modules/payment/payeezyjsv2.php`
-
-`/includes/languages/english/modules/payment/payeezyjsv2.php`
-
-**Note: You should not copy the README.md or LICENSE files to your live server.**
- 
+This module requires PHP > 7 and has not been tested on versions prior to 1.5.5f.
 
 ### External Accounts
 
 Developer portal: https://developer.payeezy.com/user
 
-Merchant Demo account: https://demo.globalgatewaye4.firstdata.com/login
+Merchant Demo: https://demo.globalgatewaye4.firstdata.com/login
 
 This module requires configuration settings from your Payeezy Developer and Merchant account logins:
 
@@ -43,10 +28,26 @@ This module requires configuration settings from your Payeezy Developer and Merc
 * `TA Token`:        From your Merchant account
 
 
+## Installation
+
+
+### PHP Files
+Upload the packaged folder and files into the corresponding locations in your own store's filesystem:
+
+`auth.php`
+
+`webhook.php`
+
+`/includes/modules/payment/payeezyjsv2/`
+
+`/includes/modules/payment/payeezyjsv2.php`
+
+`/includes/languages/english/modules/payment/payeezyjsv2.php`
+
 
 ## 1. Developer Portal Registration
 
-Create an account on the [developer portal](https://developer.payeezy.com/user). Portal registration requires a valid e-mail address. The email address cannot be changed. After you register an email is sent with further instructions to verify and activate your account. You may need to email payeezyboarding@firstdata.com with the Merchant ID (or storeID), DBA name, and developer account email address. 
+Create an account on the [developer portal](https://developer.payeezy.com/user). Portal registration requires a valid e-mail address. The email address cannot be changed after registration. An email will be sent with further instructions and to verify and activate your account. You may also need to email payeezyboarding@firstdata.com with the Merchant ID (or storeID), DBA name, and developer account email address. 
 
 More details can be found on the [Payeezy FAQs](https://developer.payeezy.com/faq-page).
 
@@ -115,12 +116,15 @@ If the Transarmor token is blank, it means that your account has not been enable
 After all of the above is complete, login to the Zen Cart admin to enable and configure the module.
 
 Add the following line in your template's footer for pages that will have the credit card form:
+
 `require DIR_WS_MODULES . 'payment/payeezyjsv2/footer.inc';`
+
+This will include the javascript necessary for the Firstdata credit card form.
 
 # Payeezy Support
 
 For Payeezy Support related queries, send an email to the support team at support.payeezy@firstdata.com or call 1.855.799.0790 for personal support.
 
-# Comment
+# Comments
 
-I found calling the technical support number to be much more fruitful than emailing. 
+Calling the technical support phone number is much more fruitful than emailing support.
