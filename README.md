@@ -34,9 +34,9 @@ This module requires configuration settings from your Payeezy Developer and Merc
 ### PHP Files
 Upload the packaged folder and files into the corresponding locations in your own store's filesystem:
 
-`auth.php`
+`auth.php` (website root)
 
-`webhook.php`
+`webhook.php` (website root)
 
 `/includes/modules/payment/payeezyjsv2/`
 
