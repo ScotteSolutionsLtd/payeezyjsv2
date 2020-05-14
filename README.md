@@ -30,6 +30,9 @@ This module requires configuration settings from your Payeezy Developer and Merc
 
 ## Installation
 
+Payment.js integration instructions can be found here and should be reviewed before installation to ensure all requirements are met:
+https://docs.paymentjs.firstdata.com/#integration-example
+
 
 ### PHP Files
 Upload the packaged folder and files into the corresponding locations in your own store's filesystem:
@@ -91,15 +94,23 @@ A registered API gives you credentials to allow processing transactions.
 ## 4. Request PaymentJS Integration / Add Merchant(s)
 
 Once certification is complete, you will need to add a Merchant. To add a merchant you will need to request integration using this form:
+
 https://docs.firstdata.com/req/paymentjs
-This step can take 2 business days. Also it is recommended to call or email Payeezy Support to ensure your request was received. Once you receive notice your merchant account has been connected:
+
+You will be required to specify a "webhook" in your request. This is the URL the PaymentJS server will respond to queries and requests made by your store. By default, the URL for the webhook will be https://www.*your-website*.com/webhook.php
+
+You can rename the file `webhook.php` to a different filename if you want your webhook URL to be different. If you are using Apache web server, you can use the .htaccess file to point requests to this file from a different URL. Just add this or something similar to your .htaccess file, replacing *MyDesiredUrl* with the value you'd like to use:
+
+`RewriteRule ^MyDesiredUrl$ /webhook.php [END,QSA,NC]`
+
+This step of requesting integration can take 2 business days. It is recommended to call or email Payeezy Support to ensure your request was received. Once you receive notice your merchant account has been connected:
 
 * Log into the developer portal
 
 * Navigate to MERCHANTS in the main menu
 
-* Click on "Sandbox" or "Live" to review your settings.
- 
+* Click on "Sandbox" or "Live" to review your settings and get your Merchant Token.
+
 If you are unable to add your merchant account, email payeezyboarding@firstdata.com with the Merchant ID (or storeID), DBA name, and developer account email address. The integration team at First Data will have to add the merchant account to your developer account.
 
 After your merchant account is added, you will also have access to login to it. Login there to access the `Transarmor Token`. This value is required for processing payments.
