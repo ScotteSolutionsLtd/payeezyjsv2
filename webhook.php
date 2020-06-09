@@ -7,13 +7,14 @@
  * @copyright Portions Copyright 2003 osCommerce
  * @package paymentMethod
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: Scott Morrison May 10, 2020 v157-payeezyjs-2.0-dev $
+ * @version $Id: Scott Morrison June 9, 2020 v157-payeezyjs-2.1-dev $
  */
-$logfile = DIR_FS_LOGS . '/logs/PayeezyJSV2-API-' . date('m-d-y') . '.log';
-$response = $msg = $logdata = '';
-error_reporting(E_ALL);
 
 require 'includes/application_top.php';
+$logfile = DIR_FS_LOGS . '/logs/PayeezyJSV2-API-' . date('m-d-y') . '.log';
+$response = $msg = $logdata = '';
+// error_reporting(E_ALL);
+
 if (MODULE_PAYMENT_PAYEEZYJSV2_DEBUG === 'Off') {
   // Get the value of Client-Token from the headers.
   $headers = [];

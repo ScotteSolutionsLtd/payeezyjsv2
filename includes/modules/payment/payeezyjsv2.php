@@ -8,7 +8,7 @@
  * Requires PHP > 7
  * @package paymentMethod
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: Scott Morrison May 10, 2020 v157-payeezyjs-2.0-dev $
+ * @version $Id: Scott Morrison June 9, 2020 v157-payeezyjs-2.1-dev $
  */
 
 if (!defined('DB_PREFIX')) {
@@ -31,7 +31,7 @@ class payeezyjsv2 extends base
   /**
    * $moduleVersion Plugin version number.
    */
-  var $moduleVersion = '2.0';
+  var $moduleVersion = '2.1';
 
   /**
    * @var bool $enabled Whether the module is enabled.
@@ -84,6 +84,8 @@ class payeezyjsv2 extends base
   {
     global $order, $insert_id;
     $this->enabled = defined('MODULE_PAYMENT_PAYEEZYJSV2_STATUS') && MODULE_PAYMENT_PAYEEZYJSV2_STATUS == 'True';
+    if (!$this->enabled)
+      return;
     $this->title = MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CATALOG_TITLE;
     $this->description = MODULE_PAYMENT_PAYEEZYJSV2_TEXT_DESCRIPTION;
     $this->sort_order = defined('MODULE_PAYMENT_PAYEEZYJSV2_SORT_ORDER') ? MODULE_PAYMENT_PAYEEZYJSV2_SORT_ORDER : null;
@@ -132,6 +134,8 @@ class payeezyjsv2 extends base
     if (is_object($order)) {
       $this->update_status();
       $this->shipping = isset($_SESSION["shipping"]) ? $_SESSION["shipping"] : '';
+      if (isset($_SESSION['securityToken']))
+        $this->getByProperty(['session_id' => $_SESSION['securityToken']]);
     }
     $this->setAvsCvvMeanings();
     $this->setSystemErrorCodes();
@@ -182,7 +186,7 @@ class payeezyjsv2 extends base
   }
 
   /**
-   * Display Credit Card Information Submission Fields for checkout.
+   * Display Credit Card Information Submission Fields for checkout_payment.
    *
    * @return array
    */
@@ -190,82 +194,25 @@ class payeezyjsv2 extends base
   {
     global $order;
 
-    return array(
+    return [
       'id' => $this->code,
       'module' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CATALOG_TITLE,
-      'fields' => [
-        array(
-          'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_OWNER,
-          'field' => '<div class="form-controls payment-fields disabled" id="cc-name" data-cc-name></div>',
-          'tag' => 'cc-name',
-        ),
-        array(
-          'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_NUMBER,
-          'field' => '<div class="form-controls payment-fields disabled empty" id="cc-card" data-cc-card></div>',
-          'tag' => 'cc-card',
-        ),
-        array(
-          'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_EXPIRES,
-          'field' => '<div class="form-controls payment-fields disabled empty" id="cc-exp" data-cc-exp></div>',
-          'tag' => 'cc-exp',
-        ),
-        array(
-          'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CVV,
-          'field' => '<div class="form-controls payment-fields disabled empty" id="cc-cvv" data-cc-cvv></div>',
-          'tag' => 'cc-cvv',
-        ),
-        array(
+      'fields' => array_merge($this->payeezyjsv2_fields(),
+        [[
           'title' => '',
-          'field' => zen_draw_hidden_field(
-              $this->code . '_fdtoken',
-              '',
-              'id="' . $this->code . '_fdtoken"'
-            ) . '<div id="payeezy-payment-errors"></div>' .
-            zen_draw_hidden_field($this->code . '_cc_number', '', 'id="' . $this->code . '_cc_number') .
-            zen_draw_hidden_field($this->code . '_currency', $order->info['currency'], 'payeezy-data="currency"') .
-            zen_draw_hidden_field(
-              $this->code . '_billing_street',
-              $order->billing['street_address'],
-              'payeezy-data="billing.street"'
-            ) .
-            zen_draw_hidden_field(
-              $this->code . '_billing_city',
-              $order->billing['city'],
-              'payeezy-data="billing.city"'
-            ) .
-            zen_draw_hidden_field(
-              $this->code . '_billing_state',
-              zen_get_zone_code(
-                $order->billing['country']['id'],
-                $order->billing['zone_id'],
-                $order->billing['state']
-              ),
-              'payeezy-data="billing.state"'
-            ) .
-            zen_draw_hidden_field(
-              $this->code . '_billing_country',
-              $order->billing['country']['iso_code_2'],
-              'payeezy-data="billing.country"'
-            ) .
-            zen_draw_hidden_field(
-              $this->code . '_billing_zip',
-              $order->billing['postcode'],
-              'payeezy-data="billing.zip"'
-            ) .
-            zen_draw_hidden_field(
-              $this->code . '_billing_email',
-              $order->customer['email_address'],
-              'payeezy-data="billing.email"'
-            ) .
-            zen_draw_hidden_field(
-              $this->code . '_billing_phone',
-              $order->customer['telephone'],
-              'payeezy-data="billing.phone"'
-            ),
           'tag' => '',
-        )
-      ]
-    );
+          'field' => zen_draw_hidden_field($this->code . '_fdtoken', '', 'id="' . $this->code . '_fdtoken"') .
+            '<div id="payeezy-payment-errors"></div>' . zen_draw_hidden_field($this->code . '_cc_number', '', 'id="'.$this->code . '_cc_number') .
+            zen_draw_hidden_field($this->code . '_currency', $order->info['currency'], 'payeezy-data="currency"') .
+            zen_draw_hidden_field($this->code . '_billing_street', $order->billing['street_address'], 'payeezy-data="billing.street"') .
+            zen_draw_hidden_field($this->code . '_billing_city', $order->billing['city'], 'payeezy-data="billing.city"') .
+            zen_draw_hidden_field($this->code . '_billing_state', zen_get_zone_code($order->billing['country']['id'], $order->billing['zone_id'], $order->billing['state']), 'payeezy-data="billing.state"') .
+            zen_draw_hidden_field($this->code . '_billing_country', $order->billing['country']['iso_code_2'], 'payeezy-data="billing.country"') .
+            zen_draw_hidden_field($this->code . '_billing_zip', $order->billing['postcode'], 'payeezy-data="billing.zip"') .
+            zen_draw_hidden_field($this->code . '_billing_email', $order->customer['email_address'], 'payeezy-data="billing.email"') .
+            zen_draw_hidden_field($this->code . '_billing_phone', $order->customer['telephone'], 'payeezy-data="billing.phone"') .
+            $this->process_button() . '<style>#paymentSubmit { display: none; }</style>',
+       ]])];
   }
 
   /**
@@ -276,7 +223,7 @@ class payeezyjsv2 extends base
    */
   public function in_special_checkout()
   {
-    return true;
+    return MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP !== 'Payment (checkout_payment)';
   }
 
   /**
@@ -286,40 +233,85 @@ class payeezyjsv2 extends base
    */
   public function confirmation()
   {
+    if (MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP !== 'Payment (checkout_payment)') {
+      return [
+        'id' => $this->code,
+        'module' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CATALOG_TITLE,
+        'fields' => $this->payeezyjsv2_fields(),
+        ];
+    }
+    else {
+      //$this->getByProperty(['session_id' => $_SESSION['securityToken']]);
+      $order = $this->order;
     return array(
       'id' => $this->code,
       'module' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CATALOG_TITLE,
       'fields' => array(
         array(
           'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_OWNER,
-          'field' => '<div class="form-controls payment-fields disabled" id="cc-name" data-cc-name></div>',
+            'field' => $this->cc_name,
           'tag' => 'cc-name',
         ),
         array(
           'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_NUMBER,
-          'field' => '<div class="form-controls payment-fields disabled empty" id="cc-card" data-cc-card></div>',
+            'field' => $this->masked,
           'tag' => 'cc-card',
         ),
         array(
           'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_EXPIRES,
-          'field' => '<div class="form-controls payment-fields disabled empty" id="cc-exp" data-cc-exp></div>',
-          'tag' => 'cc-exp',
+            'field' => substr($this->expy, 0, 2) . '/' . substr($this->expy, 2),
+            'tag' => 'cc-card',
         ),
         array(
-          'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CVV,
-          'field' => '<div class="form-controls payment-fields disabled empty" id="cc-cvv" data-cc-cvv></div>',
-          'tag' => 'cc-cvv',
-        ),
-      ),
+            'title' => '',
+            'field' => zen_draw_hidden_field($this->code . '_fdtoken', '', 'id="' . $this->code . '_fdtoken"') . '<div id="payeezy-payment-errors"></div>' .
+              zen_draw_hidden_field($this->code . '_cc_number', '', 'id="' . $this->code . '_cc_number') .
+              zen_draw_hidden_field($this->code . '_currency', $order->info['currency'], 'payeezy-data="currency"') .
+              zen_draw_hidden_field($this->code . '_billing_street', $order->billing['street_address'], 'payeezy-data="billing.street"') .
+              zen_draw_hidden_field($this->code . '_billing_city', $order->billing['city'], 'payeezy-data="billing.city"') .
+              zen_draw_hidden_field($this->code . '_billing_state', zen_get_zone_code($order->billing['country']['id'], $order->billing['zone_id'], $order->billing['state']), 'payeezy-data="billing.state"') .
+              zen_draw_hidden_field($this->code . '_billing_country', $order->billing['country']['iso_code_2'], 'payeezy-data="billing.country"') .
+              zen_draw_hidden_field($this->code . '_billing_zip', $order->billing['postcode'], 'payeezy-data="billing.zip"') .
+              zen_draw_hidden_field($this->code . '_billing_email', $order->customer['email_address'], 'payeezy-data="billing.email"') .
+              zen_draw_hidden_field($this->code . '_billing_phone', $order->customer['telephone'], 'payeezy-data="billing.phone"'),
+            'tag' => '',
+          )
+        )
     );
+  }
   }
 
   public function process_button()
   {
-    return '<div class="buttonRow forward"><button id="submit" class="btn--primary disabled-bkg pull-right" data-submit-btn disabled>
-                <span class="btn__loader" style="display:none;">loading...</span>Pay <span data-card-type></span>
-            </button>
-            <button class="btn--secondary" data-reset-btn>Reset</button></div>';
+    $process_button_string = '<button id="submit" class="btn--primary disabled-bkg" data-submit-btn disabled>
+                <span class="btn__loader" style="display:none;">loading...</span>';
+    $process_button_string .= MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP === 'Payment (checkout_payment)' ? 'Continue' : 'Pay';
+    $process_button_string .= '<span data-card-type></span></button>
+            <button class="btn--secondary" data-reset-btn>Reset</button>';
+
+    global $current_page_base;
+    if ($current_page_base === 'checkout_payment') {
+      if (MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP !== 'Payment (checkout_payment)') {
+        $process_button_string = '<style>input#btn_submit {display: none;}</style>';
+      }
+      else {
+        echo '<link rel="stylesheet" type="text/css" href="/includes/modules/payment/payeezyjsv2/fields.css">';
+      }
+    }
+    elseif ($current_page_base === 'checkout_confirmation') {
+      if (MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP === 'Payment (checkout_payment)') {
+        $process_button_string = zen_draw_hidden_field('cc_owner', $this->order->customer["firstname"] . ' ' . $this->order->customer["lastname"]) .
+          zen_draw_hidden_field('cc_expires', $this->expy) .
+          zen_draw_hidden_field('cc_type', $this->card_type) .
+          zen_draw_hidden_field('cc_number', $this->masked);
+        $process_button_string .= zen_draw_hidden_field(zen_session_name(), zen_session_id());
+      }
+      else {
+
+      }
+    }
+
+    return $process_button_string;
   }
 
   /**
@@ -327,6 +319,7 @@ class payeezyjsv2 extends base
    */
   public function before_process()
   {
+    $redirect = MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP !== 'Payment (checkout_payment)' ? 'checkout_confirmation' : 'checkout_payment';
     global $db, $messageStack, $order, $order_totals;
     if (empty($this->customer_id)) {
       $this->customer_id = $customer_id = $_SESSION['customer_id'];
@@ -341,7 +334,7 @@ class payeezyjsv2 extends base
     }
     else {
       $messageStack->add_session('checkout_payment', MODULE_PAYMENT_PAYEEZYJSV2_TEXT_COMM_ERROR, 'error');
-      zen_redirect(zen_href_link(FILENAME_CHECKOUT, '', 'SSL', true, false));
+      zen_redirect(zen_href_link($redirect, '', 'SSL', true, false));
     }
     if (empty($this->clientToken)) {
       $messageStack->add_session('checkout_payment', MODULE_PAYMENT_PAYEEZYJSV2_TEXT_COMM_ERROR, 'error');
@@ -781,7 +774,9 @@ class payeezyjsv2 extends base
       where orders_id = '" . $insert_id . "';";
     $db->Execute($sql);
 
-    $trans_msg = 'Credit Card payment.  TransID: ' . $this->transaction_id . ' Tag: ' . $this->transaction_tag;
+    $trans_msg = 'Credit Card payment.  TransID: ' . $this->transaction_id;
+    if (!empty($this->transaction_tag))
+      $trans_msg .= ' Tag: ' . $this->transaction_tag;
 
     $sql = "INSERT INTO " . TABLE_ORDERS_STATUS_HISTORY .
       " (comments, orders_id, orders_status_id, customer_notified, date_added)
@@ -792,6 +787,7 @@ class payeezyjsv2 extends base
     $db->Execute($sql);
 
     $this->saveTrans();
+    unset($_SESSION['securityToken']);
   }
 
   /**
@@ -1032,6 +1028,19 @@ class payeezyjsv2 extends base
         '',
         'zen_cfg_select_option(array(\'authorize\', \'purchase\'), ',
       ],
+      'MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP' => [
+        'Add card capture form to template',
+        'MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP',
+        'Payment (checkout_payment)',
+        'The card capture form is where customers enter their credit card details. This option allows you to put the
+        card capture form on either the Payment step of the checkout process OR the Confirmation step, depending on your
+        store.',
+        '6',
+        '0',
+        'now()',
+        '',
+        'zen_cfg_select_option(array(\'Payment (checkout_payment)\', \'Confirmation (checkout_confirmation)\'), ',
+      ],
       'MODULE_PAYMENT_PAYEEZYJSV2_ORDER_STATUS_ID' => [
         'Set Completed Order Status',
         'MODULE_PAYMENT_PAYEEZYJSV2_ORDER_STATUS_ID',
@@ -1156,6 +1165,7 @@ class payeezyjsv2 extends base
         [
           'MODULE_PAYMENT_PAYEEZYJSV2_STATUS',
           'MODULE_PAYMENT_PAYEEZYJSV2_SORT_ORDER',
+          'MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP',
           'MODULE_PAYMENT_PAYEEZYJSV2_ORDER_STATUS_ID',
           'MODULE_PAYMENT_PAYEEZYJSV2_TOKEN_STATUS_ID',
           'MODULE_PAYMENT_PAYEEZYJSV2_ZONE',
@@ -1228,6 +1238,36 @@ class payeezyjsv2 extends base
     return false;
   }
 
+  /**
+   * Loads the object with its database row data.
+   *
+   * @param array $search Any detail to search the Payeezy table for.
+   *
+   * @return bool|string
+   */
+  public function getByProperty($search = [])
+  {
+    global $db;
+    $sql = "SELECT * FROM " . TABLE_PAYEEZY_TRANSACTIONS . " WHERE ";
+    foreach ($search as $key => $item) {
+      $sql .= $key . "='" . $item . "'";
+      $sql .= ' AND ';
+    }
+    $sql = substr($sql, 0, -5);
+    $result = $db->Execute($sql);
+    if (!empty($search) && count($result->fields)) {
+      foreach ($result->fields as $key => $value)
+        $this->{$key} = $value;
+
+      if (!empty($result->fields['order_id']))
+        $this->getTrans($result->fields['order_id']);
+
+      return true;
+    }
+
+    return false;
+  }
+
   public function getCheckoutArgs()
   {
     foreach ($this->session_vars as $var_name => &$value)
@@ -1243,7 +1283,7 @@ class payeezyjsv2 extends base
    *
    * @param null|int $insert_id The order ID.
    *
-   * @return $order A Zen Cart order object.
+   * @return \order A Zen Cart order object.
    */
   public function getTrans($insert_id = null)
   {
@@ -1376,7 +1416,34 @@ class payeezyjsv2 extends base
   {
     global $order;
     $this->order = $order;
-    echo '<link rel="stylesheet" type="text/css" href="/includes/modules/payment/payeezyjsv2/fields.css">';
+    if (MODULE_PAYMENT_PAYEEZYJSV2_FORM_STEP !== 'Payment (checkout_payment)') {
+      echo '<link rel="stylesheet" type="text/css" href="/includes/modules/payment/payeezyjsv2/fields.css"><style>#btn_submit {display: none}</style>';
+  }
+  }
+
+  private function payeezyjsv2_fields() {
+    return [
+      [
+        'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_OWNER,
+        'field' => '<div class="form-controls payment-fields disabled" id="cc-name" data-cc-name></div>',
+        'tag' => 'cc-name',
+      ],
+      [
+        'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_NUMBER,
+        'field' => '<div class="form-controls payment-fields disabled empty" id="cc-card" data-cc-card></div>',
+        'tag' => 'cc-card',
+      ],
+      [
+        'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CREDIT_CARD_EXPIRES,
+        'field' => '<div class="form-controls payment-fields disabled empty" id="cc-exp" data-cc-exp></div>',
+        'tag' => 'cc-exp',
+      ],
+      [
+        'title' => MODULE_PAYMENT_PAYEEZYJSV2_TEXT_CVV,
+        'field' => '<div class="form-controls payment-fields disabled empty" id="cc-cvv" data-cc-cvv></div>',
+        'tag' => 'cc-cvv',
+      ]
+    ];
   }
 
   private function keyinfo()
@@ -1475,6 +1542,24 @@ class payeezyjsv2 extends base
         if (isset($_SESSION['cartID']) && !empty($_SESSION['cartID'])) {
           $this->getCheckoutArgs();
           $this->logTransactionData($post, $response);
+
+          // If there's a redemption code used or comments entered, capture them and apply accordingly.
+          if ($_REQUEST['dc_redeem_code']) {
+            global $db;
+            $coupon = $db->Execute("SELECT coupon_id FROM " . TABLE_COUPONS . " WHERE coupon_code = '" . zen_output_string_protected($_REQUEST['dc_redeem_code']) . "'");
+            if ($coupon->count()) {
+              // We need an active global order to process discounts.
+              global $order;
+              if (empty($order))
+                $order = new order();
+
+              $order_total = new order_total();
+              $order_total->collect_posts();
+            }
+          }
+
+          if ($_REQUEST['comments'])
+            $_SESSION['comments'] = zen_output_string_protected($_REQUEST['comments']);
 
           // Save the extras somewhere somehow.
           $this->saveTrans();

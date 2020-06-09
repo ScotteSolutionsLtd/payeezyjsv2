@@ -108,8 +108,9 @@ function authorizeSession(callback) {
     }
     request = null;
   };
+  let formData = new FormData(document.getElementById("CARD_CAPTURE_TEMPLATE"));
   request.open("POST", "/auth.php", true);
-  request.send();
+  request.send(formData);
 }
 
 const hooks = {
@@ -120,7 +121,7 @@ const onCreate = (paymentForm) => {
   const onSuccess = (clientToken) => {
     SubmitButton.removeSubmitState();
     paymentForm.reset(() => {});
-    window.location.replace("/index.php?main_page=checkout_process");
+    window.location.replace("/index.php?main_page=CHECKOUT_STEP");
   };
 
   const onError = (error) => {
@@ -135,7 +136,7 @@ const onCreate = (paymentForm) => {
     }
   };
 
-  const form = DomUtils.getEl("#checkout_confirmation")
+  const form = DomUtils.getEl("#CARD_CAPTURE_TEMPLATE");
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     SubmitButton.setSubmitState();

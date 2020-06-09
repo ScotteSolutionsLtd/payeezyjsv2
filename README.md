@@ -18,7 +18,7 @@ Developer portal: https://developer.payeezy.com/user
 
 Merchant Demo: https://demo.globalgatewaye4.firstdata.com/login
 
-This module requires configuration settings from your Payeezy Developer and Merchant account logins:
+This module requires configuration settings from your Payeezy Developer portal and Merchant Demo logins:
 
 * `API Key`:         From your Payeezy account 
 * `API Secret`:      From your Payeezy account
@@ -47,13 +47,14 @@ Upload the packaged folder and files into the corresponding locations in your ow
 
 `/includes/languages/english/modules/payment/payeezyjsv2.php`
 
+##If you are upgrading from a previous version, first remove the previous version using the "Remove Module" button in your Zen Cart admin.##
+
 
 ## 1. Developer Portal Registration
 
 Create an account on the [developer portal](https://developer.payeezy.com/user). Portal registration requires a valid e-mail address. The email address cannot be changed after registration. An email will be sent with further instructions and to verify and activate your account. You may also need to email payeezyboarding@firstdata.com with the Merchant ID (or storeID), DBA name, and developer account email address. 
 
 More details can be found on the [Payeezy FAQs](https://developer.payeezy.com/faq-page).
-
 
 ## 2. Get Certified
 
@@ -126,9 +127,11 @@ If the Transarmor token is blank, it means that your account has not been enable
 
 After all of the above is complete, login to the Zen Cart admin to enable and configure the module.
 
-Add the following line in your template's footer for pages that will have the credit card form:
+Add the following PHP line in your template's footer for pages that will have the credit card form:
 
-`require DIR_WS_MODULES . 'payment/payeezyjsv2/footer.inc';`
+`<?php require DIR_WS_MODULES . 'payment/payeezyjsv2/footer.inc'; ?>`
+
+__Important__: There is an option to include the credit card details form on the "Payment" step of the checkout process, or the "Confirmation" step. By default this is set to the "Payment". Choose the option your store uses and include the line of PHP in that template to activate the form.
 
 This will include the javascript necessary for the Firstdata credit card form.
 
